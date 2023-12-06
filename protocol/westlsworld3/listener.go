@@ -1,17 +1,17 @@
 package westlsworld3
 
 import (
-	"crypto/tls"
+	"gitee.com/zhaochuninhefei/gmgo/gmtls"
 	"github.com/openziti/dilithium/protocol/westworld3"
 	"net"
 )
 
 type listener struct {
 	w3Listener net.Listener
-	tlsConfig  *tls.Config
+	tlsConfig  *gmtls.Config
 }
 
-func Listen(addr *net.UDPAddr, tlsConfig *tls.Config, profileId byte) (net.Listener, error) {
+func Listen(addr *net.UDPAddr, tlsConfig *gmtls.Config, profileId byte) (net.Listener, error) {
 	w3Listener, err := westworld3.Listen(addr, profileId)
 	if err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func (self *listener) Accept() (net.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	return tls.Server(w3Conn, self.tlsConfig), nil
+	return gmtls.Server(w3Conn, self.tlsConfig), nil
 }
 
 func (self *listener) Close() error {

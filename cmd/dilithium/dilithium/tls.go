@@ -3,15 +3,15 @@ package dilithium
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"gitee.com/zhaochuninhefei/gmgo/gmtls"
 	"math/big"
 	"net"
 	"time"
 )
 
-func generateTLSConfig() *tls.Config {
+func generateTLSConfig() *gmtls.Config {
 	key, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		panic(err)
@@ -30,12 +30,12 @@ func generateTLSConfig() *tls.Config {
 	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
 
-	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
+	tlsCert, err := gmtls.X509KeyPair(certPEM, keyPEM)
 	if err != nil {
 		panic(err)
 	}
-	return &tls.Config{
-		Certificates:       []tls.Certificate{tlsCert},
+	return &gmtls.Config{
+		Certificates:       []gmtls.Certificate{tlsCert},
 		NextProtos:         []string{"dilithium"},
 		InsecureSkipVerify: true,
 	}

@@ -1,10 +1,8 @@
 package dilithium
 
 import (
-	"context"
-	"crypto/tls"
 	"encoding/hex"
-	"github.com/lucas-clemente/quic-go"
+	"gitee.com/zhaochuninhefei/gmgo/gmtls"
 	"github.com/openziti-incubator/cf"
 	"github.com/openziti/dilithium/protocol/westlsworld3"
 	"github.com/openziti/dilithium/protocol/westworld3"
@@ -67,14 +65,14 @@ func ProtocolFor(protocol string) (Protocol, error) {
 	case "tls":
 		impl := struct{ ProtoProtocol }{}
 		impl.listen = func(address string) (Accepter, error) {
-			listener, err := tls.Listen("tcp", address, generateTLSConfig())
+			listener, err := gmtls.Listen("tcp", address, generateTLSConfig())
 			if err != nil {
 				return nil, errors.Wrap(err, "listen")
 			}
 			return listener, nil
 		}
 		impl.dial = func(address string) (net.Conn, error) {
-			conn, err := tls.Dial("tcp", address, generateTLSConfig())
+			conn, err := gmtls.Dial("tcp", address, generateTLSConfig())
 			if err != nil {
 				return nil, errors.Wrap(err, "dial")
 			}
@@ -82,27 +80,6 @@ func ProtocolFor(protocol string) (Protocol, error) {
 		}
 		return impl, nil
 
-	case "quic":
-		impl := struct{ ProtoProtocol }{}
-		impl.listen = func(address string) (Accepter, error) {
-			listener, err := quic.ListenAddr(address, generateTLSConfig(), nil)
-			if err != nil {
-				return nil, errors.Wrap(err, "listen")
-			}
-			return &quicAccepter{listener}, nil
-		}
-		impl.dial = func(address string) (net.Conn, error) {
-			session, err := quic.DialAddr(address, generateTLSConfig(), nil)
-			if err != nil {
-				return nil, errors.Wrap(err, "dial")
-			}
-			stream, err := session.OpenStreamSync(context.Background())
-			if err != nil {
-				return nil, errors.Wrap(err, "stream")
-			}
-			return &quicConn{session, stream}, nil
-		}
-		return impl, nil
 
 	case "westworld3":
 		p := westworld3.NewBaselineProfile()
@@ -186,8 +163,8 @@ func ProtocolFor(protocol string) (Protocol, error) {
 				return nil, errors.Wrap(err, "resolve address")
 			}
 			tlsConfig := generateTLSConfig()
-			tlsConfig.ClientAuth = tls.RequireAnyClientCert
-			tlsConfig.VerifyConnection = func(cs tls.ConnectionState) error {
+			tlsConfig.ClientAuth = gmtls.RequireAnyClientCert
+			tlsConfig.VerifyConnection = func(cs gmtls.ConnectionState) error {
 				logrus.Infof("negotiated: %s, ciphersuite: %d", cs.NegotiatedProtocol, cs.CipherSuite)
 				for _, peerCert := range cs.PeerCertificates {
 					logrus.Infof("peer cert = %s", hex.Dump(peerCert.Signature))
@@ -206,8 +183,8 @@ func ProtocolFor(protocol string) (Protocol, error) {
 				return nil, errors.Wrap(err, "resolve address")
 			}
 			tlsConfig := generateTLSConfig()
-			tlsConfig.ClientAuth = tls.RequireAnyClientCert
-			tlsConfig.VerifyConnection = func(cs tls.ConnectionState) error {
+			tlsConfig.ClientAuth = gmtls.RequireAnyClientCert
+			tlsConfig.VerifyConnection = func(cs gmtls.ConnectionState) error {
 				logrus.Infof("negotiated: %s, ciphersuite: %d", cs.NegotiatedProtocol, cs.CipherSuite)
 				for _, peerCert := range cs.PeerCertificates {
 					logrus.Infof("peer cert = %s", hex.Dump(peerCert.Signature))
